@@ -16,6 +16,7 @@
  */
 package org.hawkular.component.pinger;
 
+
 /**
  * An outcome of a ping.
  *
@@ -35,7 +36,7 @@ public class PingStatus {
      * @return a new {@link PingStatus}
      */
     public static final PingStatus timeout(PingDestination destination, long timestamp, int duration) {
-        return new PingStatus(destination, 503, timestamp, duration, true);
+        return new PingStatus(destination, 503, timestamp, duration, true, Traits.empty(timestamp));
     }
 
     /**
@@ -46,7 +47,7 @@ public class PingStatus {
      * @return a new {@link PingStatus}
      */
     public static final PingStatus error(PingDestination destination, int code, long timestamp) {
-        return new PingStatus(destination, code, timestamp, INVALID_DURATION);
+        return new PingStatus(destination, code, timestamp, INVALID_DURATION, Traits.empty(timestamp));
     }
 
     /** A value for {@link #duration} in case the ping ends up in some broken state where there is no meaningful
@@ -69,6 +70,8 @@ public class PingStatus {
      * error was detected. */
     final long timestamp;
 
+    final Traits traits;
+
     /**
      * Creates a new {@link PingStatus} with {@link #timedOut} set to {@code false}.
      *
@@ -81,8 +84,8 @@ public class PingStatus {
      * @see #timeout(PingDestination, long, int)
      * @see #error(PingDestination, int, long)
      */
-    public PingStatus(PingDestination destination, int code, long timestamp, int duration) {
-        this(destination, code, timestamp, duration, false);
+    public PingStatus(PingDestination destination, int code, long timestamp, int duration, Traits traits) {
+        this(destination, code, timestamp, duration, false, traits);
     }
 
     /**
@@ -96,12 +99,14 @@ public class PingStatus {
      * @see #timeout(PingDestination, long, int)
      * @see #error(PingDestination, int, long)
      */
-    private PingStatus(PingDestination destination, int code, long timestamp, int duration, boolean timedOut) {
+    private PingStatus(PingDestination destination, int code, long timestamp, int duration, boolean timedOut,
+            Traits traits) {
         this.destination = destination;
         this.code = code;
         this.timestamp = timestamp;
         this.duration = duration;
         this.timedOut = timedOut;
+        this.traits = traits;
     }
 
     public int getCode() {

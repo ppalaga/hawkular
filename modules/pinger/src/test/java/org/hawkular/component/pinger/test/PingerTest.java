@@ -24,6 +24,7 @@ import org.hawkular.component.pinger.PingDestination;
 import org.hawkular.component.pinger.PingManager;
 import org.hawkular.component.pinger.PingStatus;
 import org.hawkular.component.pinger.Pinger;
+import org.hawkular.component.pinger.TraitsPublisher;
 import org.hawkular.metrics.client.common.SingleMetric;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,11 +36,19 @@ import org.junit.Test;
  */
 public class PingerTest {
 
+    private static final String TEST_RESOURCE_ID = "test-rsrc";
+    private static final String TEST_TENANT_ID = "test-tenat";
+    private static final String TEST_ENVIRONMENT_ID = "test-env";
+
+    private static PingDestination newDestination(String url, String method) {
+        return new PingDestination(TEST_TENANT_ID, TEST_ENVIRONMENT_ID, TEST_RESOURCE_ID, url, method);
+    }
+
     @Test
     public void testPinger() throws Exception {
 
         Pinger pinger = new Pinger();
-        PingDestination destination = new PingDestination("123","http://hawkular.github.io");
+        PingDestination destination = newDestination("http://hawkular.github.io", "GET");
         PingStatus status = pinger.ping(destination).get();
 
         Assert.assertEquals(200, status.getCode());
@@ -51,7 +60,7 @@ public class PingerTest {
     public void testHeadPinger() throws Exception {
 
         Pinger pinger = new Pinger();
-        PingDestination destination = new PingDestination("123","http://hawkular.github.io", "HEAD");
+        PingDestination destination = newDestination("http://hawkular.github.io", "HEAD");
         PingStatus status = pinger.ping(destination).get();
 
         Assert.assertEquals(200, status.getCode());
@@ -63,7 +72,7 @@ public class PingerTest {
     public void testPostPinger() throws Exception {
 
         Pinger pinger = new Pinger();
-        PingDestination destination = new PingDestination("123","https://www.perfcake.org", "POST");
+        PingDestination destination = newDestination("https://www.perfcake.org", "POST");
         PingStatus status = pinger.ping(destination).get();
 
         Assert.assertEquals(200, status.getCode());
@@ -75,7 +84,7 @@ public class PingerTest {
     public void testSslPinger() throws Exception {
 
         Pinger pinger = new Pinger();
-        PingDestination destination = new PingDestination("123","https://www.perfcake.org");
+        PingDestination destination = newDestination("https://www.perfcake.org", "GET");
         PingStatus status = pinger.ping(destination).get();
 
         Assert.assertEquals(200, status.getCode());
@@ -88,9 +97,10 @@ public class PingerTest {
         PingManager manager = new PingManager();
         manager.pinger = new Pinger();
         manager.metricPublisher = new NoOpMetricPublisher();
-        PingDestination destination = new PingDestination("123","http://hawkular.github.io");
+        PingDestination destination = newDestination("http://hawkular.github.io", "GET");
         manager.addDestination(destination);
         manager.metricPublisher = new MetricPublisher();
+        manager.traitsPublisher = new TraitsPublisher();
         try {
             manager.scheduleWork();
         } catch (javax.ws.rs.ProcessingException e) {

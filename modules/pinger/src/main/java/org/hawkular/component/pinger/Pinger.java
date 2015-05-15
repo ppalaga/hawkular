@@ -85,9 +85,9 @@ public class Pinger {
     @Asynchronous
     public Future<PingStatus> ping(final PingDestination destination) {
 
-        HttpUriRequest request = RequestBuilder.create(destination.method).setUri(destination.url).build();
+        HttpUriRequest request = RequestBuilder.create(destination.getMethod()).setUri(destination.getUrl()).build();
 
-        try (CloseableHttpClient client = getHttpClient(destination.url)) {
+        try (CloseableHttpClient client = getHttpClient(destination.getUrl())) {
             long start = System.currentTimeMillis();
             HttpResponse httpResponse = client.execute(request);
             StatusLine statusLine = httpResponse.getStatusLine();
@@ -95,7 +95,8 @@ public class Pinger {
 
             final int code = statusLine.getStatusCode();
             final int duration = (int) (now - start);
-            PingStatus result = new PingStatus(destination, code, now, duration);
+            Traits traits = Traits.collect(httpResponse, now);
+            PingStatus result = new PingStatus(destination, code, now, duration, traits);
             return new AsyncResult<>(result);
         } catch (UnknownHostException e) {
             PingStatus result = PingStatus.error(destination, 404, System.currentTimeMillis());

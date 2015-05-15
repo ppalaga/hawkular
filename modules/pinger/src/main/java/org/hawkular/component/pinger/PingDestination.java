@@ -16,38 +16,67 @@
  */
 package org.hawkular.component.pinger;
 
+import java.util.Map;
+
+import org.hawkular.inventory.api.model.Resource;
+
 /**
  * A destination for pinging.
  *
  * @author Heiko W. Rupp
+ * @author <a href="https://github.com/ppalaga">Peter Palaga</a>
  */
 public class PingDestination {
+    public static final String URL_TYPE = "URL";
+
+    public enum ResourceField {
+        url, method
+    };
+
+    public static boolean isUrl(Resource r) {
+        return URL_TYPE.equals(r.getType().getId());
+    }
+
+    public static PingDestination from(Resource r) {
+        Map<String, Object> props = r.getProperties();
+        return new PingDestination(r.getTenantId(), r.getEnvironmentId(), r.getId(),
+                (String) props.get(ResourceField.url.name()), (String) props.get(ResourceField.method.name()));
+    }
 
     /** The default method {@value} */
     public static final String DEFAULT_METHOD = "GET";
 
-    final String resourceId;
-    final String url;
-    final String method;
+    private final String tenantId;
+    private final String environmentId;
+    private final String resourceId;
+    private final String url;
+    private final String method;
 
     /**
      * Creates a new {@link PingDestination} using the default method {@value #DEFAULT_METHOD}.
      *
-     * @param resourceId the resourceId of this destination
-     * @param url the url to ping
+     * @param resourceId
+     *            the resourceId of this destination
+     * @param url
+     *            the url to ping
      */
-    public PingDestination(String resourceId, String url) {
-        this(resourceId, url, DEFAULT_METHOD);
+    public PingDestination(String tenantId, String environmentId, String resourceId, String url) {
+        this(tenantId, environmentId, resourceId, url, DEFAULT_METHOD);
     }
 
     /**
      * Creates a new {@link PingDestination}
      *
-     * @param url the url to ping
-     * @param method the HTTP method to use in the ping request or null to use the default method
-     *               {@value #DEFAULT_METHOD}
+     * @param url
+     *            the url to ping
+     * @param method
+     *            the HTTP method to use in the ping request or null to use the default method {@value #DEFAULT_METHOD}
+     * @param tenantId
+     * @param environmentId
      */
-    public PingDestination(String resourceId, String url, String method) {
+    public PingDestination(String tenantId, String environmentId, String resourceId, String url, String method) {
+        this.tenantId = tenantId;
+        this.environmentId = environmentId;
         this.resourceId = resourceId;
         this.url = url;
         this.method = method == null ? DEFAULT_METHOD : method;
@@ -55,35 +84,53 @@ public class PingDestination {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         PingDestination that = (PingDestination) o;
 
-        if (!resourceId.equals(that.resourceId)) return false;
-        if (!method.equals(that.method)) return false;
-        return url.equals(that.url);
+        return resourceId.equals(that.resourceId);
 
     }
 
     @Override
     public int hashCode() {
-        int result = resourceId.hashCode();
-        result = 31 * result + url.hashCode();
-        result = 31 * result + method.hashCode();
-        return result;
+        return resourceId.hashCode();
     }
 
     @Override
     public String toString() {
-        return "PingDestination{" +
-                "resourceId='" + resourceId + '\'' +
-                ", url='" + url + '\'' +
-                ", method='" + method + '\'' +
-                '}';
+        return "PingDestination{"
+                + "tenantId='" + tenantId + '\''
+                + "environmentId='" + environmentId + '\''
+                + "resourceId='" + resourceId + '\''
+                + ", url='" + url + '\'' + ", method='" + method
+                + '\'' + '}';
     }
 
     public String name() {
         return resourceId + "." + url;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public String getEnvironmentId() {
+        return environmentId;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getMethod() {
+        return method;
     }
 }
