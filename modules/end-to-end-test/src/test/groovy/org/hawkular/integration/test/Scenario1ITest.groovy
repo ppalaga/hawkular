@@ -17,68 +17,74 @@
 
 package org.hawkular.integration.test
 
+import java.util.Map;
+
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.hawkular.inventory.api.model.Environment
 import org.hawkular.inventory.api.model.Metric
 import org.hawkular.inventory.api.model.MetricType
+import org.hawkular.inventory.api.model.MetricUnit;
 import org.hawkular.inventory.api.model.Resource
 import org.hawkular.inventory.api.model.ResourceType
 import org.hawkular.inventory.api.model.Tenant
 
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Assert;
 import org.junit.Test
 
-import static junit.framework.Assert.assertEquals
 
-class Scenario1 extends AbstractTestBase {
+class Scenario1ITest extends AbstractTestBase {
 
-    def tenantId = "i-test"
-    def environmentId = "test"
-    def hawk_id = "hawkular_web"
+    static final String urlTypeId = "URL"
+    static final String environmentId = "test"
 
     @Test
     public void testScenario() throws Exception {
+        //def response = client.get(path: "/hawkular-accounts/organizations")
+        def response = client.get(path: "/hawkular-accounts/personas/current")
+        assertResponseOk(response.status)
+        String tenantId = response.data.id
+        println "tenantId = $tenantId"
 
-        // 1) create tenant in inventory
-        def tenant = new Tenant(tenantId)
-        def response = client.post(path: "inventory/tenants", body : tenant)
+        /* assert the test environment exists */
+        response = client.get(path: "/hawkular/inventory/$tenantId/environments/$environmentId")
+        assertResponseOk(response.status)
+        org.junit.Assert.assertEquals(environmentId, response.data.id)
+
+        /* assert the URL resource type exists */
+        response = client.get(path: "/hawkular/inventory/$tenantId/resourceTypes/$urlTypeId")
+        assertResponseOk(response.status)
+        org.junit.Assert.assertEquals(urlTypeId, response.data.id)
+
+        /* assert the metric types exist */
+        response = client.get(path: "/hawkular/inventory/$tenantId/metricTypes/status.code.type")
+        assertResponseOk(response.status)
+        response = client.get(path: "/hawkular/inventory/$tenantId/metricTypes/status.duration.type")
         assertResponseOk(response.status)
 
-        // 2) create environment in inventory
-        def environment = new Environment(environmentId)
-        response = client.post(path: "inventory/$tenantId/environments", body : environment)
-        assertResponseOk(response.status)
-
-        // 3) create resource type in inventory
-        def res_type = new ResourceType(tenantId, "URL", "1.0")
-        response = client.post(path: "inventory/$tenantId/resourceTypes", body : res_type)
-        assertResponseOk(response.status)
-
-        // 4) create resource in inventory
-        def hawk_web = new Resource(tenantId, environmentId, hawk_id, res_type)
-        hawk_web.getProperties().put("url", "http://hawkular.org")
-        response = client.post(path: "inventory/$tenantId/$environmentId/resources", body : hawk_web)
-        assertResponseOk(response.status)
-
-        // 5) create metric types ("ping" status + time metrics)
-        def status_code_type = new MetricType(tenantId, "status.code.type")
-        status_code_type.getProperties().put("description", "Status code returned from ping")
-        def status_time_type = new MetricType(tenantId, "status.time.type", MetricUnit.MILLI_SECOND)
-        status_time_type.getProperties().put("description", "Time to ping the target in ms")
-        response = client.post(path: "inventory/$tenantId/metricTypes", body: status_code_type)
-        assertResponseOk(response.status)
-        response = client.post(path: "inventory/$tenantId/metricTypes", body: status_time_type)
+        /* create a URL */
+        String resourceId = UUID.randomUUID().toString();
+        def newResource = Resource.Blueprint.builder().withId(resourceId)
+                .withResourceType(urlTypeId).withProperty("url", "http://hawkular.org").build()
+        response = client.post(path: "/hawkular/inventory/$tenantId/$environmentId/resources", body : newResource)
         assertResponseOk(response.status)
 
         // 6) create metrics
         def status_code = new Metric(tenantId, environmentId, "status.code", status_code_type)
         def status_time = new Metric(tenantId, environmentId, "status.time", status_time_type)
-        response = client.post(path: "inventory/$tenantId/$environmentId/metrics", body: status_code)
+        response = client.post(path: "/inventory/$tenantId/$environmentId/metrics", body: status_code)
         assertResponseOk(response.status)
-        response = client.post(path: "inventory/$tenantId/$environmentId/metrics", body: status_time)
+        response = client.post(path: "/inventory/$tenantId/$environmentId/metrics", body: status_time)
         assertResponseOk(response.status)
 
         // 7) assign metrics to the resource
-        response = client.post(path: "inventory/$tenantId/$environmentId/resources/$hawk_id/metrics",
-                body: ["status.code", "status.time"]
+        response = client.post(path: "/inventory/$tenantId/$environmentId/resources/$hawk_id/metrics",
+        body: [
+            "status.code",
+            "status.time"]
         )
         assertResponseOk(response.status)
 
@@ -100,19 +106,19 @@ class Scenario1 extends AbstractTestBase {
         def end = System.currentTimeMillis()
         def start = end - 4 *3600 * 1000 // 4h earlier
         response = client.get(path: "/hawkular-metrics/$tenantId/metrics/numeric/${hawk_id}.status.time/data", query:
-                [start: start, end: end])
+        [start: start, end: end])
 
         println(response.data)
 
         // 11 define an alert
 
-//        response = client.post(path: "alerts/triggers/")
+        //        response = client.post(path: "alerts/triggers/")
 
     }
 
     private void assertResponseOk(int responseCode) {
-        assertTrue("Response code should be 2xx or 304", (responseCode.status >= 200 && responseCode.status < 300) ||
-                responseCode.status == 304)
+        assertTrue("Response code should be 2xx or 304 but was "+ responseCode,
+                (responseCode >= 200 && responseCode < 300) || responseCode == 304)
     }
 
     private void postMetricValue(String resourceId, String metricName, int value, int timeSkewMinutes = 0) {
@@ -123,7 +129,9 @@ class Scenario1 extends AbstractTestBase {
         long time = now + (timeSkewMinutes * 60 * 1000)
 
         response = client.post(path: "/hawkular-metrics/$tenantId/metrics/numeric/$tmp/data",
-                body: [[timestamp: time, value: value]])
+        body: [
+            [timestamp: time, value: value]
+        ])
         assertResponseOk(response.status)
     }
 }
