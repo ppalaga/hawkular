@@ -263,11 +263,11 @@ class InventoryITest extends AbstractTestBase {
     @Test
     void testResourcesFilters() {
         def response = client.get(path: "/hawkular/inventory/$environmentId/resources",
-            query: [type: pingableHostRTypeId, typeVersion: typeVersion])
+            query: ["type.id": pingableHostRTypeId, "type.version": typeVersion])
         assertEquals(2, response.data.size())
 
         response = client.get(path: "/hawkular/inventory/$environmentId/resources",
-            query: [type: roomRTypeId, typeVersion: typeVersion])
+            query: ["type.id": roomRTypeId, "type.version": typeVersion])
         assertEquals(1, response.data.size())
 
     }
@@ -288,26 +288,26 @@ class InventoryITest extends AbstractTestBase {
     @Test
     void testPaging() {
         String path = "/hawkular/inventory/$environmentId/resources"
-        def response = client.get(path: path, query: [type: pingableHostRTypeId, typeVersion: typeVersion, page: 0, per_page: 2, sort: "id"])
+        def response = client.get(path: path, query: ["type.id": pingableHostRTypeId, "type.version": typeVersion, page: 0, per_page: 2, sort: "id"])
         assertEquals(2, response.data.size())
 
         def first = response.data.get(0)
         def second = response.data.get(1)
 
-        response = client.get(path: path, query: [type: pingableHostRTypeId, typeVersion: typeVersion, page: 0, per_page: 1, sort: "id"])
+        response = client.get(path: path, query: ["type.id": pingableHostRTypeId, "type.version": typeVersion, page: 0, per_page: 1, sort: "id"])
         assertEquals(1, response.data.size())
         assertEquals(first, response.data.get(0))
 
-        response = client.get(path: path, query: [type: pingableHostRTypeId, typeVersion: typeVersion, page: 1, per_page: 1, sort: "id"])
+        response = client.get(path: path, query: ["type.id": pingableHostRTypeId, "type.version": typeVersion, page: 1, per_page: 1, sort: "id"])
         assertEquals(1, response.data.size())
         assertEquals(second, response.data.get(0))
 
-        response = client.get(path: path, query: [type: pingableHostRTypeId, typeVersion: typeVersion, page : 0, per_page: 1, sort: "id",
+        response = client.get(path: path, query: ["type.id": pingableHostRTypeId, "type.version": typeVersion, page : 0, per_page: 1, sort: "id",
                                                                                order: "desc"])
         assertEquals(1, response.data.size())
         assertEquals(second, response.data.get(0))
 
-        response = client.get(path: path, query: [type: pingableHostRTypeId, typeVersion: typeVersion, page : 1, per_page: 1, sort: "id",
+        response = client.get(path: path, query: ["type.id": pingableHostRTypeId, "type.version": typeVersion, page : 1, per_page: 1, sort: "id",
                                                                                order: "desc"])
         assertEquals(1, response.data.size())
         assertEquals(first, response.data.get(0))
