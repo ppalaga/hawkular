@@ -105,9 +105,32 @@
         <hawkular.log.cassandra>INFO</hawkular.log.cassandra>
         <hawkular.log.ejb3>WARN</hawkular.log.ejb3>
         <hawkular.log.rewrite>WARN</hawkular.log.rewrite>
+
+        <hawkular.ui.services.root.dir>${project.build.directory}/hawkular-ui-services</hawkular.ui.services.root.dir>
       </properties>
       <build>
+
         <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-scm-plugin</artifactId>
+            <version>1.9.4</version>
+            <executions>
+              <execution>
+                <id>checkout-hawkular-ui-services</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>checkout</goal>
+                </goals>
+                <configuration>
+                  <checkoutDirectory>${hawkular.ui.services.root.dir}</checkoutDirectory>
+                  <connectionUrl>scm:git:https://github.com/hawkular/hawkular-ui-services.git</connectionUrl>
+                  <scmVersionType>tag</scmVersionType>
+                  <scmVersion>v0.5.0</scmVersion>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
 
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -128,6 +151,75 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+
+            <configuration>
+              <srcdir>${hawkular.ui.services.root.dir}</srcdir>
+              <workingDirectory>${hawkular.ui.services.root.dir}</workingDirectory>
+            </configuration>
+
+            <executions>
+              <execution>
+                <id>install node and npm</id>
+                <goals>
+                  <goal>install-node-and-npm</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <nodeVersion>${version.nodejs}</nodeVersion>
+                  <npmVersion>${version.npm}</npmVersion>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>npm install</id>
+                <goals>
+                  <goal>npm</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <arguments>install</arguments>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>bower install</id>
+                <goals>
+                  <goal>bower</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <arguments>install</arguments>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>gulp build</id>
+                <goals>
+                  <goal>gulp</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <arguments>build</arguments>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>gulp tests</id>
+                <goals>
+                  <goal>gulp</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <arguments>rest:metric</arguments>
+                </configuration>
+              </execution>
+
             </executions>
           </plugin>
 
