@@ -3,87 +3,105 @@
     <div class="spinner spinner-lg"></div>
     <p class="hk-spinner-legend-below">Loading...</p>
   </div>
-  <div class="hk-urls-list" ng-class="{'hk-urls-empty text-center': vm.resourceList.length === 0, 'hk-fade-in': vm.resourceList}" ng-show="vm.resourceList">
-    <h1 class="text-center">Hello {{userDetails.firstName}}!</h1>
-    <i class="fa fa-line-chart" ng-show="vm.resourceList.length === 0"></i>
-    <h2 ng-show="vm.resourceList.length === 0">Collect metrics from a URL that you want to monitor.</h2>
-    <form class="form-horizontal hk-add-url" name="addUrlForm" role="form" novalidate ng-submit="vm.addUrl(vm.resourceUrl)">
-      <div class="form-group input">
-        <div class="col-lg-6 col-sm-8 col-xs-12 hk-align-center">
-          <div class="input-group input-group-lg">
-            <input type="url" class="form-control" name="resourceUrl" ng-model="vm.resourceUrl"
-                   ng-model-options="{ updateOn: 'default blur'}"
-                   placeholder="Enter a website URL (e.g.: http://www.website.com)" required>
-            <span class="input-group-btn">
-              <button class="btn btn-primary" type="submit" ng-disabled="addUrlForm.$invalid || vm.addProgress">
-               <div ng-show="vm.addProgress" class="spinner spinner-sm"></div>
-              Add URL
-              </button>
-            </span>
-          </div>
-          <span class="help-block"
-                  ng-show="addUrlForm.resourceUrl.$dirty && addUrlForm.resourceUrl.$invalid">The URL you entered is not valid. Please enter a valid URL.</span>
 
+  <div ng-show="vm.resourceList" ng-class="{'hk-fade-in': vm.resourceList}">
+    <h1 class="text-center">{{userDetails.firstName}}'s URLs</h1>
+
+    <h3 class="pull-left">Current Status (Aggregate)</h3>
+    <span class="hk-update pull-right" tooltip-trigger tooltip-placement="top" tooltip="Last update"><i class="fa fa-clock-o"></i>{{vm.lastUpdateTimestamp | date:'HH:mm:ss'}}</span>
+    <div class="panel panel-default hk-summary">
+      <div class="row">
+        <!--
+        <div class="col-sm-3 hk-summary-item">
+          <span class="hk-data">0 <i class="fa fa-flag" ng-show="alertsNumTBD > 0"></i></span>
+          <span class="hk-item">Alerts</span>
+        </div>
+        -->
+        <div class="col-sm-3 hk-summary-item">
+          <span class="hk-data">{{vm.resourceList.length}}</span>
+          <span class="hk-item">URLs</span>
+        </div>
+        <div class="col-sm-3 hk-summary-item">
+          <a href="#">
+            <span class="hk-data">{{(vm.resourceList|filter:{isUp: true}:true).length}} <i class="fa fa-arrow-up"></i></span>
+            <span class="hk-item">Up</span>
+          </a>
+        </div>
+        <div class="col-sm-3 hk-summary-item">
+          <a href="#">
+            <span class="hk-data">{{(vm.resourceList|filter:{isUp: false}:true).length}} <i class="fa fa-arrow-down"></i></span>
+            <span class="hk-item">Down</span>
+          </a>
+        </div>
+        <div class="col-sm-3 hk-summary-item">
+          <a href="#">
+            <span class="hk-data">{{(vm.resourceList.length - (vm.resourceList|filter:{isUp: true}:true).length - (vm.resourceList|filter:{isUp: false}:true).length)}} <i class="fa fa-chain-broken"></i></span>
+            <span class="hk-item">Unknown</span>
+          </a>
         </div>
       </div>
-    </form>
-  </div>
-
-  <h2 ng-show="vm.resourceList.length > 0" class="text-center hk-fade-in">Current status of your URLs</h2>
-
-  <div class="row hk-urls-list-labels" ng-class="{'hk-fade-in': vm.resourceList}" ng-show="vm.resourceList.length > 0">
-    <div class="col-sm-6 text-left">
-      <button class="btn btn-link" tooltip="Sort" tooltip-trigger tooltip-placement="top" ng-click="vm.reverse = !vm.reverse">
-        URL (A-Z) <i class="fa" ng-class="vm.reverse ? 'fa-angle-up' : 'fa-angle-down'"></i>
-      </button>
-    </div>
-    <div class="col-sm-6 text-right">
-      <span class="hk-update pull-right" tooltip-trigger tooltip-placement="top" tooltip="Last update"><i class="fa fa-clock-o"></i>{{vm.lastUpdateTimestamp | date:'HH:mm:ss'}}</span>
     </div>
   </div>
 
-  <div ng-class="{'hk-fade-in': vm.resourceList}">
-    <div class="hk-url-item" ng-repeat="res in vm.resourceList | orderBy:'properties.url':vm.reverse">
-      <div class="hk-url-heading">
-        <a href="/hawkular-ui/url/availability/{{res.id}}">{{res.properties.url}}</a>
-      </div>
-      <div class="panel panel-default hk-summary">
-        <div class="row">
-          <div class="col-sm-3 hk-summary-item">
-            <a href="/hawkular-ui/url/alerts/{{res.id}}">
-              <span class="hk-data">{{(vm.alertList|filter:{triggerId: (res.id + '_trigger')}).length || 0}} <i class="fa fa-flag" ng-show="(vm.alertList|filter:{triggerId: (res.id + '_trigger')}).length > 0"></i></span>
-              <span class="hk-item">Unresolved Alerts</span>
-            </a>
-          </div>
-          <div class="col-sm-3 hk-summary-item">
-            <a href="/hawkular-ui/url/availability/{{res.id}}">
-              <span class="hk-data" ng-show="res.responseTime.length > 0"><i class="fa " ng-class="res.isUp ? 'fa-arrow-up' : 'fa-arrow-down'"></i>{{res.isUp ? 'Up' : 'Down'}}</span>
-              <span class="hk-data spinner" ng-hide="res.responseTime.length > 0" popover="Your data is being collected. You should see something in a few seconds." popover-trigger="mouseenter" popover-placement="bottom"></span>
-              <span class="hk-item">Current Availability</span>
-            </a>
-          </div>
-          <div class="col-sm-3 hk-summary-item">
-            <a href="/hawkular-ui/url/availability/{{res.id}}">
-              <span class="hk-data" ng-show="res.lastDowntime > 0" am-time-ago="res.lastDowntime"></span>
-              <span class="hk-data" ng-show="res.lastDowntime <= 0">n/a</span>
-              <span class="hk-item">Last Downtime</span>
-            </a>
-          </div>
-          <div class="col-sm-3 hk-summary-item">
-            <a href="/hawkular-ui/url/response-time/{{res.id}}">
-              <span class="hk-data" ng-show="res.responseTime.length > 0 && res.responseTime[0].value >= 0">{{res.responseTime[0].value}} <span>ms</span></span>
-              <span class="hk-data" ng-show="res.responseTime.length > 0 && res.responseTime[0].value < 0">n/a</span>
-              <span class="hk-data spinner" ng-hide="res.responseTime.length > 0" popover="Your data is being collected. You should see something in a few seconds." popover-trigger="mouseenter" popover-placement="bottom"></span>
-              <span class="hk-item">Current Response Time</span>
-            </a>
+  <h3>URLs ({{(vm.resourceList | filter:vm.search).length}}</b> of <b>{{vm.resourceList.length}})</h3>
+
+  <div>
+    <div class="dataTables_header">
+      <div id="DataTables_Table_0_filter" class="dataTables_filter"><label>Filter <input type="search" ng-model="vm.search" aria-controls="DataTables_Table_0"></label></div>
+      <form class="form-horizontal hk-add-url" name="addUrlForm" role="form" novalidate ng-submit="vm.addUrl(vm.resourceUrl)">
+        <div class="form-group input">
+          <div class="col-lg-6 col-sm-8 col-xs-12 hk-align-center">
+            <div class="input-group input-group-lg">
+              <input type="url" class="form-control" name="resourceUrl" ng-model="vm.resourceUrl"
+                     ng-model-options="{ updateOn: 'default blur'}"
+                     placeholder="http://" required>
+              <span class="input-group-btn">
+                <button class="btn btn-primary" type="submit" ng-disabled="addUrlForm.$invalid || vm.addProgress">
+                 <div ng-show="vm.addProgress" class="spinner spinner-sm"></div>
+                Add
+                </button>
+              </span>
+            </div>
+            <span class="help-block"
+                    ng-show="addUrlForm.resourceUrl.$dirty && addUrlForm.resourceUrl.$invalid">The URL you entered is not valid. Please enter a valid URL.</span>
+
           </div>
         </div>
-        <button class="btn btn-link hk-delete" tooltip="Delete" tooltip-trigger tooltip-placement="top" ng-click="vm.deleteResource(res)"><i class="fa fa-trash-o"></i></button>
-      </div>
+      </form>
+    </div>
+    <table class="datatable table table-striped table-bordered" ng-show="vm.resourceList.length > 0">
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th>Powered By</th>
+          <th>Server</th>
+          <th>State</th>
+          <th></th>
+          <!-- <th>Custom Tags</th> -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd"><td valign="top" colspan="5" class="dataTables_empty" ng-show="vm.search && (vm.resourceList | filter:vm.search).length === 0"><p>Suggestions</p><ul><li>Check the syntax of the search term.</li><li>Check that the correct menu option is chosen (token ID vs. user ID).</li><li>Use wildcards (* to match zero or more characters or ? to match a single character).</li><li>Clear the search field, then click Search to return to the 20 most recent records.</li></ul></td></tr>
+        <tr ng-repeat="res in vm.resourceList | filter:vm.search | orderBy:'properties.url':vm.reverse">
+          <td><a href="/hawkular-ui/url/availability/{{res.id}}">{{res.properties.url}}</a> <a href="/hawkular-ui/url/availability/{{res.id}}" class="pull-right"><span class="label label-danger label-alert" tooltip-trigger tooltip-placement="top" tooltip="URL alerts" ng-show="(vm.alertList|filter:{triggerId: (res.id + '_trigger')}).length > 0">{{(vm.alertList|filter:{triggerId: (res.id + '_trigger')}).length || 0}}</span></a></td>
+          <td>{{res.properties['trait-x-powered-by']}}</td>
+          <td>{{res.properties['trait-server']}}</td>
+          <td class="state">
+            <a href="/hawkular-ui/url/availability/{{res.id}}">
+              <i class="fa fa-arrow-up" ng-show="res.responseTime.length > 0 && res.isUp"></i>
+              <i class="fa fa-arrow-down" ng-show="res.responseTime.length > 0 && !res.isUp"></i>
+              <p ng-hide="res.responseTime.length > 0"><span class="spinner spinner-sm spinner-inline"></span> <span class="fetching">Fetching state...</span></p>
+              {{res.responseTime.length > 0 ? (res.isUp ? 'Up' : 'Down') : ''}}
+            </a>
+          </td>
+          <td><button class="btn btn-link hk-delete" tooltip="Delete" tooltip-trigger tooltip-placement="top" ng-click="vm.deleteResource(res)"><i class="fa fa-trash-o"></i></button></td>
+          <!-- <td class="center"><span class="label label-primary" ng-repeat="tag in res.tags">{{tag}}</span><span ng-hide="res.tags.length > 0">--</span></td> -->
+        </tr>
+      </tbody>
+    </table>
+    <div class="dataTables_footer">
+      <hk-data-pagination resource-list="vm.resourceList" current-page="vm.resCurPage" page-setter="vm.setPage(pageNumber)"
+                     per-page="vm.resPerPage" headers="vm.headerLinks"></hk-data-pagination>
     </div>
   </div>
-
-  <hk-pagination resource-list="vm.resourceList" current-page="vm.resCurPage" page-setter="vm.setPage(pageNumber)"
-      per-page="vm.resPerPage" headers="vm.headerLinks"></hk-pagination>
-
 </div>

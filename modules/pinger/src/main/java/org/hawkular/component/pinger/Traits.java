@@ -109,6 +109,7 @@ public class Traits {
             Header header = headers.nextHeader();
             TraitHeader traitHeader = TraitHeader.fastValueOf(header.getName());
             if (traitHeader != null) {
+                Log.LOG.tracef("Found a trait header %s: %s", header.getName(), header.getValue());
                 if (items == null) {
                     items = new HashMap<>();
                     items.put(traitHeader, header.getValue());
