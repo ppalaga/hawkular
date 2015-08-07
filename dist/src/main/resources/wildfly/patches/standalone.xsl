@@ -857,6 +857,9 @@
                                  attribute="qualified-host-name" />
             <resource-config-dmr name="Version"
                                  attribute="release-version" />
+            <resource-config-dmr name="IP Addresses"
+                                 path="/socket-binding-group=standard-sockets/socket-binding=http"
+                                 attribute="bound-address" />
           </resource-type-dmr>
         </resource-type-set-dmr>
 
