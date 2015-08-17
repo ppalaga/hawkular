@@ -85,7 +85,8 @@
     <version.gnu.getopt>1.0.13</version.gnu.getopt>
     <version.org.hawkular.accounts>1.0.10.Final</version.org.hawkular.accounts>
     <version.org.hawkular.agent>0.3.5.Final</version.org.hawkular.agent>
-    <version.org.hawkular.alerts>0.3.3.Final</version.org.hawkular.alerts>
+    <version.org.hawkular.alerts>0.4.0-SRC-2a4ab9789d5c0b24e1c9e495d957f04e1c7130d0</version.org.hawkular.alerts>
+    <!-- <version.org.hawkular.alerts>0.4.0-SNAPSHOT</version.org.hawkular.alerts> -->
     <version.org.hawkular.bus>0.3.4</version.org.hawkular.bus>
     <version.org.hawkular.commons>0.2.0.Final</version.org.hawkular.commons>
     <version.org.hawkular.metrics>0.5.0.Final</version.org.hawkular.metrics>
@@ -266,5 +267,25 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.l2x6.maven.srcdeps</groupId>
+        <artifactId>srcdeps-maven-plugin</artifactId>
+        <version>0.0.1</version>
+        <extensions>true</extensions>
+        <configuration>
+          <repositories>
+            <repository>
+              <id>org.hawkular.alerts</id>
+              <selectors>
+                <selector>org.hawkular.alerts</selector>
+              </selectors>
+              <url>scm:git:git@github.com:hawkular/hawkular-alerts.git</url>
+            </repository>
+          </repositories>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>
